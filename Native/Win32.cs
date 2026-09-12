@@ -4,9 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace file_logger.Native;
 
-using SESSION_HANDLE = uint;
-using PROCESS_HANDLE = uint;
-
 using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
 
 /// <summary>
@@ -72,14 +69,14 @@ static class Win32
     }
 
     [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
-    private static extern int RmStartSession(out SESSION_HANDLE pSessionHandle, int dwSessionFlags, string strSessionKey);
+    private static extern int RmStartSession(out uint pSessionHandle, int dwSessionFlags, string strSessionKey);
 
     [DllImport("rstrtmgr.dll")]
     private static extern int RmEndSession(uint pSessionHandle);
 
     [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
     private static extern int RmRegisterResources(
-        SESSION_HANDLE pSessionHandle,
+        uint pSessionHandle,
         uint nFiles,
         string[] rgsFilenames,
         uint nApplications,
@@ -90,7 +87,7 @@ static class Win32
 
     [DllImport("rstrtmgr.dll")]
     private static extern int RmGetList(
-        SESSION_HANDLE dwSessionHandle,
+        uint dwSessionHandle,
         out uint pnProcInfoNeeded,
         ref uint pnProcInfo,
         [In, Out] RM_PROCESS_INFO[]? rgAffectedApps,
@@ -101,17 +98,12 @@ static class Win32
         if (!OperatingSystem.IsWindows())
             return Array.Empty<int>();
 
-        SESSION_HANDLE sessionHandle = 0;
+        uint sessionHandle = 0;
 
         string sessionKey = Guid.NewGuid().ToString("N");
 
         var result = new List<int>();
 
-
-        /* TODO: 
-            2. RmGetList увидеть все дескрипторы процессов которые сейчас блочат файл/папку;
-            3. Добавить в result все id процессов, дескрипторы которых получилось достать;
-         */
         try
         {
             int errorResult = RmStartSession(out sessionHandle, 0, sessionKey);
@@ -155,11 +147,60 @@ static class Win32
                 default:
                     throw new Exception("Undefined erorr result code after RmStartSession execution");
             }
+
+            uint pnProcInfoNeeded = 0;
+            uint pnProcInfo = 0;
+            uint rebootReasons = 0;
+
+            errorResult = RmGetList(sessionHandle, out pnProcInfoNeeded, ref pnProcInfo, null, ref rebootReasons);
+
+            switch (errorResult)
+            {
+                // TODO: make enum for getList error codes
+                case 234:
+                    if (pnProcInfoNeeded > 0)
+                    {
+                        DevLogger.Log("RmGetList executed successfully. Go to next step get processes metadata");
+                        break;
+                    }
+                    throw new Exception("Error, we get 234 error code but pnProcInfoNeeded is not more than 0");
+                default:
+                    throw new Exception("Undefined erorr result code during RmGetList execution");
+            }
+
+            var processInfo = new RM_PROCESS_INFO[pnProcInfoNeeded];
+            pnProcInfo = pnProcInfoNeeded;
+
+            errorResult = RmGetList(sessionHandle, out pnProcInfoNeeded, ref pnProcInfo, processInfo, ref rebootReasons);
+
+            switch (errorResult)
+            {
+                // TODO: make enum for getList error codes
+                case 0:
+                    for (int i = 0; i < pnProcInfo; i++)
+                        result.Add(processInfo[i].Process.dwProcessId);
+                    break;
+                default:
+                    throw new Exception("Undefined erorr result code during RmGetList for make processes list");
+            }
         }
         catch (Exception ex)
         {
             DevLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
-            Environment.Exit(0);
+
+
+            /* TODO: replace close process with return empty result list */
+            Environment.Exit(1);
+        }
+        finally
+        {
+            if(sessionHandle != 0)
+            {
+                if(RmEndSession(sessionHandle) != 0)
+                {
+                    Environment.Exit(1);
+                }
+            }
         }
         return result;
     }
