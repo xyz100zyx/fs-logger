@@ -29,11 +29,21 @@ static class Win32
         RmCritical = 1000
     }
 
-    private enum SESSION_WIN_32_ERROR_CODES
+    private enum START_SESSION_WIN_32_ERROR_CODES
     {
         ERROR_SUCCESS = 0,
         ERROR_INVALID_PARAMETER = 87,
         ERROR_ACCESS_DENIED = 5
+    }
+
+    private enum REG_SESSION_RESOURCES_WIN_32_ERROR_CODES
+    {
+        ERROR_SUCCESS = 0,
+        ERROR_INVALID_HANDLE = 6, // Передан недействительный дескриптор сессии
+        ERROR_OUTOFMEMORY = 14, // Недостаточно памяти
+        ERROR_WRITE_FAULT = 29, // Не удалось прочитать/записать в реестр
+        ERROR_SEM_TIMEOUT = 121, // Не удалось получить мьютекс реестра; рекомендуется перезагрузка
+        ERROR_BAD_ARGUMENTS = 160 // Один или несколько аргументов неверны
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -108,21 +118,44 @@ static class Win32
 
             switch (errorResult)
             {
-                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_ACCESS_DENIED:
+                case (int)START_SESSION_WIN_32_ERROR_CODES.ERROR_ACCESS_DENIED:
                     throw new Exception("Access denied error during open the session in RmStartSession");
-                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_INVALID_PARAMETER:
+                case (int)START_SESSION_WIN_32_ERROR_CODES.ERROR_INVALID_PARAMETER:
                     throw new Exception("Invalid arguments error during open the session in RmStartSession");
-                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_SUCCESS:
+                case (int)START_SESSION_WIN_32_ERROR_CODES.ERROR_SUCCESS:
                     DevLogger.Log("RmStartSession execute correctly. Runs the next step as objects registration");
                     break;
                 default:
                     throw new Exception("Undefined erorr result code after RmStartSession execution");
-                    
+
             }
 
             string[] resources = { objectPath };
+
+            errorResult = RmRegisterResources(sessionHandle, (uint)resources.Length, resources, 0, null, 0, null);
+
+            switch (errorResult)
+            {
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_BAD_ARGUMENTS:
+                    throw new Exception("Bad args passed in fn RmRegisterResources");
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_INVALID_HANDLE:
+                    throw new Exception("Invalid session descriptor for RmRegisterResources");
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_OUTOFMEMORY:
+                    DevLogger.Log("Memory out of bounds in RmRegisterResources");
+                    break;
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_SEM_TIMEOUT:
+                    DevLogger.Log("Timeout for get mutex in RmRegisterResources");
+                    break;
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_WRITE_FAULT:
+                    DevLogger.Log("Cannot write in registry in RmRegisterResources");
+                    break;
+                case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_SUCCESS:
+                    DevLogger.Log("RmRegisterResources execute correctly. Runs the next step as get processes list");
+                    break;
+                default:
+                    throw new Exception("Undefined erorr result code after RmStartSession execution");
+            }
         }
-        
         catch (Exception ex)
         {
             DevLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
