@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
@@ -5,6 +6,8 @@ namespace file_logger.Native;
 
 using SESSION_HANDLE = uint;
 using PROCESS_HANDLE = uint;
+
+using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
 
 /// <summary>
 /// Windows SDK -> RestartManager.h
@@ -24,6 +27,13 @@ static class Win32
         RmExplorer = 4,
         RmConsole = 5,
         RmCritical = 1000
+    }
+
+    private enum SESSION_WIN_32_ERROR_CODES
+    {
+        ERROR_SUCCESS = 0,
+        ERROR_INVALID_PARAMETER = 87,
+        ERROR_ACCESS_DENIED = 5
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -89,12 +99,35 @@ static class Win32
 
 
         /* TODO: 
-        
-            1. открыть дескриптор сессии;
             2. RmGetList увидеть все дескрипторы процессов которые сейчас блочат файл/папку;
             3. Добавить в result все id процессов, дескрипторы которых получилось достать;
          */
+        try
+        {
+            int errorResult = RmStartSession(out sessionHandle, 0, sessionKey);
 
+            switch (errorResult)
+            {
+                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_ACCESS_DENIED:
+                    throw new Exception("Access denied error during open the session in RmStartSession");
+                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_INVALID_PARAMETER:
+                    throw new Exception("Invalid arguments error during open the session in RmStartSession");
+                case (int)SESSION_WIN_32_ERROR_CODES.ERROR_SUCCESS:
+                    DevLogger.Log("RmStartSession execute correctly. Runs the next step as objects registration");
+                    break;
+                default:
+                    throw new Exception("Undefined erorr result code after RmStartSession execution");
+                    
+            }
+
+            string[] resources = { objectPath };
+        }
+        
+        catch (Exception ex)
+        {
+            DevLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
+            Environment.Exit(0);
+        }
         return result;
     }
 }
