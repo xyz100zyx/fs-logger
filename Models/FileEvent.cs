@@ -3,9 +3,10 @@ namespace file_logger.Models;
 public enum FileEventType
 {
     Created,
-    Chnaged,
+    Changed,
     Deleted,
-    Updated
+    Updated,
+    Renamed
 }
 
 /// <summary>
@@ -36,7 +37,7 @@ public sealed class FileEvent
     /// <summary>       
     /// размер объекта в байтах
     /// </summary>
-    public long SizeOfObject {get; init;}
+    public long? SizeOfObject {get; init;}
 
     public string? Sha256 { get; init; }
 

@@ -6,7 +6,7 @@ using file_logger.Native;
 
 using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
 
-namespace file_logger.FileMetaDataCollector;
+namespace file_logger.Core;
 
 
 using PROCESS_DESC = (int? pid, string? pName);

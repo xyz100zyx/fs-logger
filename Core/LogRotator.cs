@@ -12,7 +12,7 @@ public sealed class LogRotator : IDisposable
 
     private StreamWriter? _streamWriter;
 
-    private string _currentFilePath;
+    private string? _currentFilePath;
 
     private DateOnly _currentDate;
 
@@ -103,7 +103,10 @@ public sealed class LogRotator : IDisposable
             n++;
         } while (File.Exists(archivePath));
 
-        File.Move(_currentFilePath, archivePath);
+        if (_currentFilePath is not null)
+        {
+            File.Move(_currentFilePath, archivePath);
+        }
 
     }
 

@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using file_logger.Models;
 
 namespace file_logger.Core;
