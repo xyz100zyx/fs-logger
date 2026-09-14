@@ -1,6 +1,5 @@
 using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
+using file_logger.Configuration;
 using System.Security.Cryptography;
 using file_logger.Native;
 

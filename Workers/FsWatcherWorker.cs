@@ -4,6 +4,7 @@ using file_logger.Core;
 using System.Threading.Channels;
 using file_logger.Models;
 using Microsoft.Extensions.Options;
+using file_logger.Configuration;
 
 namespace file_logger.Workers;
 
@@ -69,19 +70,32 @@ public sealed class FsWatcherWorker : BackgroundService
         _watcher.Renamed += (_, e) => OnRawEvent(FileEventType.Renamed, e.FullPath, e.OldFullPath);
         _watcher.Error += (_, e) => _logger.LogError(e.GetException(), "Ошибка FileSystemWatcher");
 
+
         _watcher.EnableRaisingEvents = true;
         _logger.LogInformation($"Start watchin on {_loggerOptions.WatchableDirectoryPath}");
 
+        var taskConsumer = ConsumeAsync(cancellationToken);
 
-        // TODO: make consumer
+        try
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
 
+        }
+
+        _watcher.EnableRaisingEvents = false;
+        _watcher.Dispose();
+        _channel.Writer.Complete();
+
+        await taskConsumer;
 
     }
 
 
     private void OnRawEvent(FileEventType eventType, string path, string? oldPath)
     {
-
         bool isDir = Directory.Exists(path);
 
         try
@@ -93,12 +107,10 @@ public sealed class FsWatcherWorker : BackgroundService
                 OldFullPathToObject = oldPath,
                 IsDirectory = isDir,
             };
-
             if (!_dedup.ShouldProcess(evt))
             {
                 _logger.LogInformation($"Event is duplicated. Event={evt}, path={path}");
             }
-
             if (!_channel.Writer.TryWrite(evt))
             {
                 _logger.LogWarning($"Channel is fulfilled, event is canceled: {path}");

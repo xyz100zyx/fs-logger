@@ -1,3 +1,5 @@
+namespace file_logger.Configuration;
+
 public sealed class LoggerOptions
 {
     public const string SectionName = "Logger";

@@ -1,2 +1,5 @@
 bin
 obj
+watched
+logs
+/appsettings.json

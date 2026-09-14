@@ -1,4 +1,4 @@
-using System.Formats.Asn1;
+using file_logger.Configuration;
 using System.Text;
 using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
 
@@ -69,7 +69,12 @@ public sealed class LogRotator : IDisposable
         _currentDate = todayDateOnly;
         _currentFilePath = BuildFileName(todayDateOnly);
 
-        var fileStream = new FileStream(_currentFilePath, FileMode.Append, FileAccess.Read, FileShare.Read);
+        var fileStream = new FileStream(
+            _currentFilePath,
+            FileMode.Append,
+            FileAccess.Write,
+            FileShare.Read
+        );
         _streamWriter = new StreamWriter(fileStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false))
         {
             AutoFlush = true

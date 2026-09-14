@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
 namespace file_logger.Native;
@@ -156,16 +154,16 @@ static class Win32
 
             switch (errorResult)
             {
-                // TODO: make enum for getList error codes
                 case 234:
                     if (pnProcInfoNeeded > 0)
                     {
                         DevLogger.Log("RmGetList executed successfully. Go to next step get processes metadata");
-                        break;
                     }
-                    throw new Exception("Error, we get 234 error code but pnProcInfoNeeded is not more than 0");
+                    break;
                 default:
-                    throw new Exception("Undefined erorr result code during RmGetList execution");
+                    DevLogger.Log($"errRes={errorResult}");
+                    break;
+                    // throw new Exception("Undefined erorr result code during RmGetList execution");
             }
 
             var processInfo = new RM_PROCESS_INFO[pnProcInfoNeeded];
@@ -194,9 +192,9 @@ static class Win32
         }
         finally
         {
-            if(sessionHandle != 0)
+            if (sessionHandle != 0)
             {
-                if(RmEndSession(sessionHandle) != 0)
+                if (RmEndSession(sessionHandle) != 0)
                 {
                     Environment.Exit(1);
                 }
