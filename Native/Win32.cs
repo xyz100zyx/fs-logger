@@ -173,7 +173,7 @@ static class Win32
 
             switch (errorResult)
             {
-                // TODO: make enum for getList error codes
+                // TODO::[refactor]: make enum for getList error codes
                 case 0:
                     for (int i = 0; i < pnProcInfo; i++)
                         result.Add(processInfo[i].Process.dwProcessId);
@@ -187,7 +187,7 @@ static class Win32
             DevLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
 
 
-            /* TODO: replace close process with return empty result list */
+            /* TODO::[refactor]: replace close process with return empty result list */
             Environment.Exit(1);
         }
         finally
