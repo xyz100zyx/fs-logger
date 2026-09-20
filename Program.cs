@@ -3,7 +3,8 @@ using file_logger.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using file_logger.Core;
+using System.Text;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -16,6 +17,19 @@ builder.Services.Configure<LoggerOptions>(
     builder.Configuration.GetSection(LoggerOptions.SectionName));
 
 builder.Services.AddHostedService<FsWatcherWorker>();
+
+
+var reader = new JsonFileReader(@"D:\projects\c_sharp_edu\file-logger\logs\2026-09-15.jsonl");
+
+long count = 0;
+
+reader.Read((in LogRecord r) =>
+{
+    count++;
+
+    string path = Encoding.UTF8.GetString(r.Path);
+    Console.WriteLine($"{r.Timestamp:O}");
+});
 
 var host = builder.Build();
 await host.RunAsync();
