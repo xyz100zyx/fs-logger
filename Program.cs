@@ -26,9 +26,7 @@ long count = 0;
 reader.Read((in LogRecord r) =>
 {
     count++;
-
-    string path = Encoding.UTF8.GetString(r.Path);
-    Console.WriteLine($"{r.Timestamp:O}");
+    Console.WriteLine(r.ToString());
 });
 
 var host = builder.Build();

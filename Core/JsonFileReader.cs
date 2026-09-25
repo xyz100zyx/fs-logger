@@ -41,6 +41,7 @@ public sealed class JsonFileReader
                     else
                     {
                         // TODO::bussiness: если не получилось распарсить, кинуть лог в клик на мануальный анализ
+                        DevConsoleLogger.LogError("Unable to read log. JsonLineParser.TryParseLine returns false");
                     }
                     start = lineEnd + 1;
                 }
@@ -68,11 +69,11 @@ public sealed class JsonFileReader
         }
         catch (Exception ex)
         {
-            // TODO::bussiness: обработка
+            DevConsoleLogger.LogError($"Error during parsing jsonl (inside JsonFileReader.Read) {ex.Message}");
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(rentedBuffer);
+            ArrayPool<byte>.Shared.Return(rentedBuffer, true);
         }
     }
 

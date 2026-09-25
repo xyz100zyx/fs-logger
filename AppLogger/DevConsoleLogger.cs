@@ -1,8 +1,5 @@
-namespace file_logger.DevConsoleLogger;
+namespace file_logger.Loggin;
 
-/// <remarks>
-/// TODO::[refactor]: зарегать в провайдере и прокидывать логгер через appsettings
-/// </remarks>
 static class DevConsoleLogger
 {
     

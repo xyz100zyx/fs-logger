@@ -40,13 +40,13 @@ public static class JsonLineParser
                 return true;
             }
             if (reader.TokenType != JsonTokenType.PropertyName) return false;
-            var propetryName = reader.ValueSpan;
+            var propertyName = reader.ValueSpan;
             // после получения типа токена читаем значение;
             if (!reader.Read()) return false;
-            switch (propetryName.Length)
+            switch (propertyName.Length)
             {
                 case 2:
-                    if (propetryName[0] == (byte)'t' && propetryName[1] == (byte)'s')
+                    if (propertyName[0] == (byte)'t' && propertyName[1] == (byte)'s')
                     {
                         if (reader.TokenType == JsonTokenType.String && TryParseIsoTimestamp(reader.ValueSpan, out ts))
                         {
@@ -56,7 +56,7 @@ public static class JsonLineParser
                     }
                     break;
                 case 3:
-                    if (propetryName[0] == (byte)'p' && propetryName[1] == (byte)'i' && propetryName[2] == (byte)'d')
+                    if (propertyName[0] == (byte)'p' && propertyName[1] == (byte)'i' && propertyName[2] == (byte)'d')
                     {
                         if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out pid))
                         {
@@ -66,7 +66,7 @@ public static class JsonLineParser
                     }
                     break;
                 case 4:
-                    if (propetryName.SequenceEqual("type"u8))
+                    if (propertyName.SequenceEqual("type"u8))
                     {
                         if (reader.TokenType == JsonTokenType.String)
                         {
@@ -76,7 +76,7 @@ public static class JsonLineParser
                         return false;
                     }
 
-                    if (propetryName.SequenceEqual("path"u8))
+                    if (propertyName.SequenceEqual("path"u8))
                     {
                         if (reader.TokenType == JsonTokenType.String)
                         {
@@ -85,9 +85,14 @@ public static class JsonLineParser
                         }
                         return false;
                     }
-                    if (propetryName.SequenceEqual("size"u8))
+                    if (propertyName.SequenceEqual("size"u8))
                     {
                         if (reader.TokenType == JsonTokenType.String)
+                        {
+                            reader.TryGetInt64(out size);
+                            continue;
+                        }
+                        if (reader.TokenType == JsonTokenType.Number)
                         {
                             reader.TryGetInt64(out size);
                             continue;
@@ -101,7 +106,7 @@ public static class JsonLineParser
                     }
                     break;
                 case 5:
-                    if (propetryName.SequenceEqual("isDir"u8))
+                    if (propertyName.SequenceEqual("isDir"u8))
                     {
                         if (reader.TokenType == JsonTokenType.True) { isDir = true; continue; }
                         if (reader.TokenType == JsonTokenType.False) { isDir = false; continue; }
@@ -109,7 +114,7 @@ public static class JsonLineParser
                     }
                     break;
                 case 6:
-                    if (propetryName.SequenceEqual("sha256"u8))
+                    if (propertyName.SequenceEqual("sha256"u8))
                     {
                         if (reader.TokenType == JsonTokenType.String)
                         {
@@ -125,7 +130,7 @@ public static class JsonLineParser
                     }
                     break;
                 case 7:
-                    if (propetryName.SequenceEqual("oldPath"u8))
+                    if (propertyName.SequenceEqual("oldPath"u8))
                     {
                         if (reader.TokenType == JsonTokenType.String)
                         {
@@ -140,6 +145,9 @@ public static class JsonLineParser
                         return false;
                     }
                     break;
+                default:
+                    DevConsoleLogger.LogError("Is reached unhandled jsonl log component");
+                    break;
             }
             if (reader.TokenType == JsonTokenType.StartObject ||
                 reader.TokenType == JsonTokenType.StartArray)
@@ -147,7 +155,7 @@ public static class JsonLineParser
                 reader.Skip();
             }
         }
-        return false;
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

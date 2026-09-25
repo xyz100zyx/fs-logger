@@ -2,8 +2,6 @@ using System.Runtime.InteropServices;
 
 namespace file_logger.Native;
 
-using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
-
 /// <summary>
 /// Windows SDK -> RestartManager.h
 /// </summary>
@@ -113,7 +111,7 @@ static class Win32
                 case (int)START_SESSION_WIN_32_ERROR_CODES.ERROR_INVALID_PARAMETER:
                     throw new Exception("Invalid arguments error during open the session in RmStartSession");
                 case (int)START_SESSION_WIN_32_ERROR_CODES.ERROR_SUCCESS:
-                    DevLogger.Log("RmStartSession execute correctly. Runs the next step as objects registration");
+                    DevConsoleLogger.Log("RmStartSession execute correctly. Runs the next step as objects registration");
                     break;
                 default:
                     throw new Exception("Undefined erorr result code after RmStartSession execution");
@@ -131,16 +129,16 @@ static class Win32
                 case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_INVALID_HANDLE:
                     throw new Exception("Invalid session descriptor for RmRegisterResources");
                 case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_OUTOFMEMORY:
-                    DevLogger.Log("Memory out of bounds in RmRegisterResources");
+                    DevConsoleLogger.Log("Memory out of bounds in RmRegisterResources");
                     break;
                 case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_SEM_TIMEOUT:
-                    DevLogger.Log("Timeout for get mutex in RmRegisterResources");
+                    DevConsoleLogger.Log("Timeout for get mutex in RmRegisterResources");
                     break;
                 case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_WRITE_FAULT:
-                    DevLogger.Log("Cannot write in registry in RmRegisterResources");
+                    DevConsoleLogger.Log("Cannot write in registry in RmRegisterResources");
                     break;
                 case (int)REG_SESSION_RESOURCES_WIN_32_ERROR_CODES.ERROR_SUCCESS:
-                    DevLogger.Log("RmRegisterResources execute correctly. Runs the next step as get processes list");
+                    DevConsoleLogger.Log("RmRegisterResources execute correctly. Runs the next step as get processes list");
                     break;
                 default:
                     throw new Exception("Undefined erorr result code after RmStartSession execution");
@@ -157,11 +155,11 @@ static class Win32
                 case 234:
                     if (pnProcInfoNeeded > 0)
                     {
-                        DevLogger.Log("RmGetList executed successfully. Go to next step get processes metadata");
+                        DevConsoleLogger.Log("RmGetList executed successfully. Go to next step get processes metadata");
                     }
                     break;
                 default:
-                    DevLogger.Log($"errRes={errorResult}");
+                    DevConsoleLogger.Log($"errRes={errorResult}");
                     break;
                     // throw new Exception("Undefined erorr result code during RmGetList execution");
             }
@@ -184,7 +182,7 @@ static class Win32
         }
         catch (Exception ex)
         {
-            DevLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
+            DevConsoleLogger.Log($"RmStartSession execute correctly. Runs the next step as objects registration: {ex}");
 
 
             /* TODO::[refactor]: replace close process with return empty result list */

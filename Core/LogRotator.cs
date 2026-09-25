@@ -1,6 +1,5 @@
 using file_logger.Configuration;
 using System.Text;
-using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
 
 namespace file_logger.Core;
 
@@ -47,7 +46,7 @@ public sealed class LogRotator : IDisposable
         }
         catch (Exception ex)
         {
-            DevLogger.LogError($"Error on write log line into logs file. Method WriteLogLine.\nErrMsg={ex.Message}");
+            DevConsoleLogger.LogError($"Error on write log line into logs file. Method WriteLogLine.\nErrMsg={ex.Message}");
         }
 
     }

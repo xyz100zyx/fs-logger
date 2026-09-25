@@ -9,6 +9,7 @@ public static class MemorySizer
     {
         return KiloByte * sizeKb;
     }
+
     public static uint GetMbMemoryInBytes(uint sizeMb)
     {
         return MegaByte * sizeMb;

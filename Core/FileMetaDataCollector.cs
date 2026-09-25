@@ -3,8 +3,6 @@ using file_logger.Configuration;
 using System.Security.Cryptography;
 using file_logger.Native;
 
-using DevLogger = file_logger.DevConsoleLogger.DevConsoleLogger;
-
 namespace file_logger.Core;
 
 
@@ -35,7 +33,7 @@ public sealed class FileMetaDataCollector
         }
         catch (Exception ex)
         {
-            DevLogger.LogError($"Error during execute getResourceObjectSize. ErrMsg={ex.Message}");
+            DevConsoleLogger.LogError($"Error during execute getResourceObjectSize. ErrMsg={ex.Message}");
             return null;
         }
 
@@ -55,9 +53,9 @@ public sealed class FileMetaDataCollector
                 throw new Exception("fileInfo is not FileInfo");
             }
 
-            bool isUnavailableToComputeHash_SHA256 = fileInfo.Length > _loggerOptions.MaxHashFileSizeBytes; 
-        
-            if(isUnavailableToComputeHash_SHA256) return null;
+            bool isUnavailableToComputeHash_SHA256 = fileInfo.Length > _loggerOptions.MaxHashFileSizeBytes;
+
+            if (isUnavailableToComputeHash_SHA256) return null;
 
             using var fStream = File.OpenRead(resourceObjectPath);
             using var hasher = SHA256.Create();
@@ -67,7 +65,7 @@ public sealed class FileMetaDataCollector
         }
         catch (Exception ex)
         {
-            DevLogger.LogError($"Error during execute getResourceObjectSize. ErrMsg={ex.Message}");
+            DevConsoleLogger.LogError($"Error during execute getResourceObjectSize. ErrMsg={ex.Message}");
             return null;
         }
     }
@@ -86,8 +84,8 @@ public sealed class FileMetaDataCollector
         try
         {
             var lockingProcessids = Win32.GetLockingProcessIds(resourceObjectPath);
-        
-           if(lockingProcessids.Count == 0) return fallback;
+
+            if (lockingProcessids.Count == 0) return fallback;
 
 
 
@@ -101,14 +99,14 @@ public sealed class FileMetaDataCollector
             }
             catch
             {
-                DevLogger.Log($"We cannot get process name for pid {procId}");
+                DevConsoleLogger.Log($"We cannot get process name for pid {procId}");
             }
 
-            return (procId, procName);    
+            return (procId, procName);
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-            DevLogger.LogError($"Error in method TryGetLockingProcessInfo. ErrMsg={ex.Message}");
+            DevConsoleLogger.LogError($"Error in method TryGetLockingProcessInfo. ErrMsg={ex.Message}");
             return fallback;
         }
     }

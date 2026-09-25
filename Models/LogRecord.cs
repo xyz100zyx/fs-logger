@@ -38,6 +38,11 @@ public readonly ref struct LogRecord
         Pid = pid;
         Process = process;
     }
+
+    public override string ToString()
+    {
+        return $"timestamp={Timestamp.ToShortTimeString()}\tpath={Path.ToString()}\teventType={EventType.ToString()}";
+    }
     public bool HasSize => Size != long.MinValue;
     public bool HasSha256 => !Sha256.IsEmpty;
 }
