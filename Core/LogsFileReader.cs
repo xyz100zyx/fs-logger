@@ -1,34 +1,57 @@
 using System.Buffers;
 using file_logger.Core;
 
-public sealed class JsonFileReader
+public sealed class LogsFileReader
 {
     private string _filepath;
     private uint _bufferSize;
-    public JsonFileReader(string filepath, uint bufferSize = 2 << 20)
+
+    private int _offset;
+    private int _total;
+
+    private CancellationTokenSource _cts;
+
+    public LogsFileReader(string filepath, uint bufferSize = 2 << 20)
     {
         _filepath = filepath;
         _bufferSize = bufferSize;
+        _cts = new();
+        _offset = 0;
     }
 
     public void Read(HandleLog onLogProcessed)
     {
+
+        _cts = new();
+
         using FileStream fs = new(_filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16, FileOptions.SequentialScan);
         var rentedBuffer = ArrayPool<byte>.Shared.Rent((int)_bufferSize);
 
+        if(_total >= fs.Length)
+        {
+            DevConsoleLogger.Log("File was readed full. Waiting for new changes in file...");
+            return;
+        }
+
         try
         {
-            int offset = 0;
-
+            _offset = 0;
             while (true)
             {
-                int readed = fs.Read(rentedBuffer, offset, rentedBuffer.Length - offset);
-                if (readed == 0 && offset == 0) break;
-                int total = readed + offset;
-                var span = rentedBuffer.AsSpan<byte>(0, total);
+                if (_cts.Token.IsCancellationRequested || rentedBuffer is null) break;
+
+                int readed = fs.Read(rentedBuffer, _offset, rentedBuffer.Length - _offset);
+
+                if (readed == 0 && _offset == 0)  break;
+
+                _total = readed + _offset;
+                var span = rentedBuffer.AsSpan<byte>(0, _total);
                 int start = 0;
+
                 while (true)
                 {
+                    if (_cts.Token.IsCancellationRequested) break;
+
                     int newLineSymbol = span[start..].IndexOf((byte)'\n');
                     if (newLineSymbol < 0)
                         break;
@@ -45,7 +68,7 @@ public sealed class JsonFileReader
                     }
                     start = lineEnd + 1;
                 }
-                int remaining = total - start;
+                int remaining = _total - start;
                 if (remaining > 0)
                 {
                     if (remaining >= rentedBuffer.Length)
@@ -55,14 +78,14 @@ public sealed class JsonFileReader
                     }
                     Buffer.BlockCopy(rentedBuffer, start, rentedBuffer, 0, remaining);
                 }
-                offset = remaining;
+                _offset = remaining;
 
                 if (readed == 0)
                     break;
             }
-            if (offset > 0)
+            if (_offset > 0)
             {
-                ReadOnlySpan<byte> lastLine = rentedBuffer.AsSpan(0, offset);
+                ReadOnlySpan<byte> lastLine = rentedBuffer.AsSpan(0, _offset);
                 if (JsonLineParser.TryParseLine(lastLine, out var record))
                     onLogProcessed(in record);
             }
@@ -75,6 +98,12 @@ public sealed class JsonFileReader
         {
             ArrayPool<byte>.Shared.Return(rentedBuffer, true);
         }
+    }
+
+    public void AbortReading()
+    {
+        DevConsoleLogger.Log("Abort log file reader");
+        _cts.Cancel();
     }
 
 }
