@@ -5,7 +5,6 @@ using file_logger.Native;
 
 namespace file_logger.Core;
 
-
 using PROCESS_DESC = (int? pid, string? pName);
 
 public sealed class FileMetaDataCollector
@@ -86,8 +85,6 @@ public sealed class FileMetaDataCollector
             var lockingProcessids = Win32.GetLockingProcessIds(resourceObjectPath);
 
             if (lockingProcessids.Count == 0) return fallback;
-
-
 
             int procId = lockingProcessids[0];
             string? procName = null;

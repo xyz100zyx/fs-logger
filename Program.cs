@@ -18,16 +18,8 @@ builder.Services.Configure<LoggerOptions>(
 
 builder.Services.AddHostedService<FsWatcherWorker>();
 
-
-var reader = new JsonFileReader(@"D:\projects\c_sharp_edu\file-logger\logs\2026-09-15.jsonl");
-
-long count = 0;
-
-reader.Read((in LogRecord r) =>
-{
-    count++;
-    Console.WriteLine(r.ToString());
-});
+var logsReadingSessionManager = new LogsReaderSessionManager(@"D:\projects\c_sharp_edu\file-logger\logs\2026-09-26.jsonl");
+logsReadingSessionManager.RunSession();
 
 var host = builder.Build();
 await host.RunAsync();
